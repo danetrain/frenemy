@@ -16,6 +16,9 @@ def main():
     print "USAGE: python htmlscraper.py <URL> <OUTPUT FILE>"
     sys.exit(1)
 
+  #list of likely names for a login form#
+  likely_names = ["login_form", "login", "log_in", "log_in_form", "loginform"]
+
   #load up the desired page and save the html#
   with Browser() as browser:
     url = sys.argv[1]

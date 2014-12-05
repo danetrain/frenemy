@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/python
 
 #
 # This function uses Splinter to scrape a given page's HTML, and

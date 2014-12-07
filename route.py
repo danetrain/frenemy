@@ -29,13 +29,13 @@ print "IP is " + myIP + "\n"
 virtHost = "NameVirtualHost *:80"
 listener = "Listen " + myIP + ":80"
 portConf = "# If you just change the port or add more ports here, you will likely also\n# have to change the VirtualHost statement in\n# /etc/apache2/sites-enabled/000-default\n# This is also true if you have upgraded from before 2.2.9-3 (i.e. from\n# Debian etch). See /usr/share/doc/apache2.2-common/NEWS.Debian.gz and\n# README.Debian.gz\n\n" + virtHost + "\n" + listener + "\n\n<IfModule mod_ssl.c>\n# If you add NameVirtualHost *:443 here, you will also have to change\n# the VirtualHost statement in /etc/apache2/sites-available/default-ssl\n# to <VirtualHost *:443>\n# Server Name Indication for SSL named virtual hosts is currently not\n# supported by MSIE on Windows XP.\nListen 443\n</IfModule>\n\n<IfModule mod_gnutls.c>\nListen 443\n</IfModule>\n\n"
-path = "/etc/apache2/ports.conf"
-bak = "/etc/apache2/ports.conf.bak"
+confPath = "/etc/apache2/ports.conf"
+confPathBak = "/etc/apache2/ports.conf.bak"
 
-if os.path.isfile(path):
-    if not os.path.isfile(bak):
-        shutil.copyfile(path, bak)
-    f = open(path, "w")
+if os.path.isfile(confPath):
+    if not os.path.isfile(confPathBak):
+        shutil.copyfile(confPath, confPathBak)
+    f = open(confPath, "w")
     f.write(portConf)
     f.close()
     del f
@@ -83,7 +83,7 @@ print p.wait()
 print p.communicate(), "\n"
 
 # Workflow
-# 1. Need to add "Listen <MY_IP>:80" to file /etc/apache2/ports.conf with other Listen statements at top 
+# 1. Need to add "Listen <MY_IP>:80" to file /etc/apache2/ports.conf with other Listen statements at top
 # 2. Need to restart apache2: /etc/init.d/apache2 restart
 # 3. Need to turn on iprouting using: echo 1 > /proc/sys/net/ipv4/ip_forward
 # 4. iptables routing: iptables -t nat -A PREROUTING -d 31.13.69.1/24 -j DNAT --to-destination 192.168.1.10

